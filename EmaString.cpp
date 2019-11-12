@@ -1,29 +1,57 @@
-#include "PString.h"
+/*|-----------------------------------------------------------------------------
+ *|            This source code is provided under the Apache 2.0 license      --
+ *|  and is provided AS IS with no warranty or guarantee of fit for purpose.  --
+ *|                See the project's LICENSE.md for details.                  --
+ *|           Copyright Thomson Reuters 2015. All rights reserved.            --
+ *|-----------------------------------------------------------------------------
+ */
 
- 
+#include "EmaString.h"
+#include "ExceptionTranslator.h"
 
-PString::PString() :
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "Utilities.h"
+
+using namespace thomsonreuters::ema::access;
+
+EmaString::EmaString() :
     _pString ( 0 ),
     _length ( 0 ),
     _capacity ( 0 )
 {
 }
 
-PString::PString( const char* str, UInt32 length ) :
+//		length		0						0 < x < npos			npos
+//
+//	str
+//
+//	null			_capacity = 0			_capacity = x + 1		_capacity = 0
+//					_length = 0				_length = 0				_length = 0
+//
+//	not null		_capacity = 0			_capacity = x + 1		_capacity = actual string length + 1
+//					_length = 0				_length = x				_length = actual string length
+//																	IUE if actual string length >= EmaString::npos
+//											copy content			copy content
+//
+EmaString::EmaString ( const char* str, UInt32 length ) :
     _pString ( 0 ),
     _length ( str ? length : 0 ),
     _capacity ( 0 )
 {
-	if ( length == PString::npos )
+	if ( length == EmaString::npos )
 	{
 		if ( str )
 		{
 			size_t tempLength = strlen( str );
 
-			if ( tempLength >= PString::npos )
+			if ( tempLength >= EmaString::npos )
 			{
-				const char* temp = "The length of the passed in string is larger than MAX_UINT32. PString( const char* , UInt32 ).";
-				throw ( temp );
+				const char* temp = "The length of the passed in string is larger than MAX_UINT32. EmaString( const char* , UInt32 ).";
+				throwIueException( temp );
 				return;
 			}
 
@@ -43,8 +71,8 @@ PString::PString( const char* str, UInt32 length ) :
 
         if ( !_pString )
         {
-            const char* temp = "Failed to allocate memory in PString( const char* , UInt32 ).";
-			throw( temp );
+            const char* temp = "Failed to allocate memory in EmaString( const char* , UInt32 ).";
+            throwMeeException( temp );
             return;
         }
 
@@ -53,7 +81,7 @@ PString::PString( const char* str, UInt32 length ) :
     }
 }
 
-PString::PString( const PString& other ) :
+EmaString::EmaString ( const EmaString& other ) :
     _pString ( 0 ),
     _length ( other._length ),
     _capacity ( other._length + 1 )
@@ -64,8 +92,8 @@ PString::PString( const PString& other ) :
 
         if ( !_pString )
         {
-            const char* temp = "Failed to allocate memory in PString( const char* , UInt32 ).";
-            throw( temp );
+            const char* temp = "Failed to allocate memory in EmaString( const char* , UInt32 ).";
+            throwMeeException( temp );
             return;
         }
 
@@ -78,13 +106,13 @@ PString::PString( const PString& other ) :
     }
 }
 
-PString::~PString()
+EmaString::~EmaString()
 {
     if ( _pString )
         free ( _pString );
 }
 
-PString& PString::clear()
+EmaString& EmaString::clear()
 {
     _length = 0;
     if ( _pString )
@@ -93,27 +121,27 @@ PString& PString::clear()
     return *this;
 }
 
-bool PString::empty() const
+bool EmaString::empty() const
 {
     return !_length ? true : false;
 }
 
-const char* PString::c_str() const
+const char* EmaString::c_str() const
 {
     return _pString ? _pString : "";
 }
 
-UInt32 PString::length() const
+UInt32 EmaString::length() const
 {
     return _length;
 }
 
-PString& PString::operator= ( const char* str )
+EmaString& EmaString::operator= ( const char* str )
 {
     return set ( str );
 }
 
-PString& PString::operator= ( const PString& other )
+EmaString& EmaString::operator= ( const EmaString& other )
 {
     if ( this == &other ) return *this;
 
@@ -132,8 +160,8 @@ PString& PString::operator= ( const PString& other )
             _pString = ( char* ) malloc ( _capacity );
             if ( !_pString )
             {
-                const char* temp = "Failed to allocate memory in PString::operator=( const PString& ).";
-                throw ( temp );
+                const char* temp = "Failed to allocate memory in EmaString::operator=( const EmaString& ).";
+                throwMeeException ( temp );
                 return *this;
             }
         }
@@ -162,21 +190,21 @@ PString& PString::operator= ( const PString& other )
 //
 //	not null		_capacity = existing	_capacity = x + 1 or existing		_capacity = actual string length + 1 or existing
 //					_length = 0				_length = x							_length = actual string length
-//																				IUE if actual string length >= PString::npos
+//																				IUE if actual string length >= EmaString::npos
 //											copy content						copy content
 //
-PString& PString::set ( const char* str, UInt32 length )
+EmaString& EmaString::set ( const char* str, UInt32 length )
 {
 	if ( str )
 	{
-		if ( length == PString::npos )
+		if ( length == EmaString::npos )
 		{
 			size_t tempLength = strlen( str );
 
-			if ( tempLength >= PString::npos )
+			if ( tempLength >= EmaString::npos )
 			{
-				const char* temp = "The length of the passed in string is larger than MAX_UINT32. PString::set( const char* , UInt32 ).";
-				throw( temp );
+				const char* temp = "The length of the passed in string is larger than MAX_UINT32. EmaString::set( const char* , UInt32 ).";
+				throwIueException( temp );
 				return *this;
 			}
 
@@ -189,7 +217,7 @@ PString& PString::set ( const char* str, UInt32 length )
 	}
 	else
 	{
-		if ( length == PString::npos || !length )
+		if ( length == EmaString::npos || !length )
 		{
 			clear();
 		}
@@ -209,8 +237,8 @@ PString& PString::set ( const char* str, UInt32 length )
 				_pString = ( char* )malloc( _capacity );
 				if ( !_pString )
 				{
-					const char* temp = "Failed to allocate memory in PString::set( const char* , UInt32 ).";
-					throw ( temp );
+					const char* temp = "Failed to allocate memory in EmaString::set( const char* , UInt32 ).";
+					throwMeeException( temp );
 					return *this;
 				}
 				
@@ -238,8 +266,8 @@ PString& PString::set ( const char* str, UInt32 length )
             _pString = ( char* )malloc( _capacity );
             if ( !_pString )
             {
-                const char* temp = "Failed to allocate memory in PString::set( const char* , UInt32 ).";
-                throw ( temp );
+                const char* temp = "Failed to allocate memory in EmaString::set( const char* , UInt32 ).";
+                throwMeeException( temp );
                 return *this;
             }
         }
@@ -255,13 +283,13 @@ PString& PString::set ( const char* str, UInt32 length )
     return *this;
 }
 
-PString& PString::append ( Int64 i )
+EmaString& EmaString::append ( Int64 i )
 {
 	/* Check for length overflow before malloc */
-	if (((UInt64)_length + 22) >= (UInt64)PString::npos)
+	if (((UInt64)_length + 22) >= (UInt64)EmaString::npos)
 	{
-		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( Int64 ).";
-		throw (temp);
+		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. EmaString::append( Int64 ).";
+		throwIueException(temp);
 		return *this;
 	}
 
@@ -272,8 +300,8 @@ PString& PString::append ( Int64 i )
         char* pNewString = ( char* ) malloc ( _capacity );
         if ( !pNewString )
         {
-            const char* temp = "Failed to allocate memory in PString::append( Int64 ).";
-            throw ( temp );
+            const char* temp = "Failed to allocate memory in EmaString::append( Int64 ).";
+            throwMeeException ( temp );
             return *this;
         }
 
@@ -295,13 +323,13 @@ PString& PString::append ( Int64 i )
     return *this;
 }
 
-PString& PString::append ( UInt64 i )
+EmaString& EmaString::append ( UInt64 i )
 {
 	/* Check for length overflow before malloc */
-	if (((UInt64)_length + 22) >= (UInt64)PString::npos)
+	if (((UInt64)_length + 22) >= (UInt64)EmaString::npos)
 	{
-		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( UInt64 ).";
-		throw (temp);
+		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. EmaString::append( UInt64 ).";
+		throwIueException(temp);
 		return *this;
 	}
 
@@ -312,8 +340,8 @@ PString& PString::append ( UInt64 i )
         char* pNewString = ( char* ) malloc ( _capacity );
         if ( !pNewString )
         {
-            const char* temp = "Failed to allocate memory in PString::append( UInt64 ).";
-            throw  ( temp );
+            const char* temp = "Failed to allocate memory in EmaString::append( UInt64 ).";
+            throwMeeException ( temp );
             return *this;
         }
 
@@ -331,13 +359,13 @@ PString& PString::append ( UInt64 i )
     return *this;
 }
 
-PString& PString::append ( Int32 i )
+EmaString& EmaString::append ( Int32 i )
 {
 	/* Check for length overflow before malloc */
-	if (((UInt64)_length + 13) >= (UInt64)PString::npos)
+	if (((UInt64)_length + 13) >= (UInt64)EmaString::npos)
 	{
-		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( Int32 ).";
-		throw (temp);
+		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. EmaString::append( Int32 ).";
+		throwIueException(temp);
 		return *this;
 	}
 
@@ -348,8 +376,8 @@ PString& PString::append ( Int32 i )
         char* pNewString = ( char* ) malloc ( _capacity );
         if ( !pNewString )
         {
-            const char* temp = "Failed to allocate memory in PString::append( Int32 ).";
-            throw ( temp );
+            const char* temp = "Failed to allocate memory in EmaString::append( Int32 ).";
+            throwMeeException ( temp );
             return *this;
         }
 
@@ -371,13 +399,13 @@ PString& PString::append ( Int32 i )
     return *this;
 }
 
-PString& PString::append ( UInt32 i )
+EmaString& EmaString::append ( UInt32 i )
 {
 	/* Check for length overflow before malloc */
-	if (((UInt64)_length + 13) >= (UInt64)PString::npos)
+	if (((UInt64)_length + 13) >= (UInt64)EmaString::npos)
 	{
-		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( UInt32 ).";
-		throw (temp);
+		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. EmaString::append( UInt32 ).";
+		throwIueException(temp);
 		return *this;
 	}
 	
@@ -388,8 +416,8 @@ PString& PString::append ( UInt32 i )
         char* pNewString = ( char* ) malloc ( _capacity );
         if ( !pNewString )
         {
-            const char* temp = "Failed to allocate memory in PString::append( UInt32 ).";
-            throw ( temp );
+            const char* temp = "Failed to allocate memory in EmaString::append( UInt32 ).";
+            throwMeeException ( temp );
             return *this;
         }
 
@@ -411,13 +439,13 @@ PString& PString::append ( UInt32 i )
     return *this;
 }
 
-PString& PString::append ( float f )
+EmaString& EmaString::append ( float f )
 {
 	/* Check for length overflow before malloc */
-	if (((UInt64)_length + 33) >= (UInt64)PString::npos)
+	if (((UInt64)_length + 33) >= (UInt64)EmaString::npos)
 	{
-		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( float ).";
-		throw(temp);
+		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. EmaString::append( float ).";
+		throwIueException(temp);
 		return *this;
 	}
 	
@@ -428,8 +456,8 @@ PString& PString::append ( float f )
         char* pNewString = ( char* ) malloc ( _capacity );
         if ( !pNewString )
         {
-            const char* temp = "Failed to allocate memory in PString::append( float ).";
-            throw ( temp );
+            const char* temp = "Failed to allocate memory in EmaString::append( float ).";
+            throwMeeException ( temp );
             return *this;
         }
 
@@ -451,13 +479,13 @@ PString& PString::append ( float f )
     return *this;
 }
 
-PString& PString::append ( double d )
+EmaString& EmaString::append ( double d )
 {
 	/* Check for length overflow before malloc */
-	if (((UInt64)_length + 33) >= (UInt64)PString::npos)
+	if (((UInt64)_length + 33) >= (UInt64)EmaString::npos)
 	{
-		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( double ).";
-		throw(temp);
+		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. EmaString::append( double ).";
+		throwIueException(temp);
 		return *this;
 	}
 	
@@ -468,8 +496,8 @@ PString& PString::append ( double d )
         char* pNewString = ( char* ) malloc ( _capacity );
         if ( !pNewString )
         {
-            const char* temp = "Failed to allocate memory in PString::append( double ).";
-            throw ( temp );
+            const char* temp = "Failed to allocate memory in EmaString::append( double ).";
+            throwMeeException ( temp );
             return *this;
         }
 
@@ -491,17 +519,17 @@ PString& PString::append ( double d )
     return *this;
 }
 
-PString& PString::append ( const char* str )
+EmaString& EmaString::append ( const char* str )
 {
     size_t strLength = str ? static_cast<size_t> ( strlen ( str ) ) : 0;
 
     if ( !strLength ) return *this;
 
 	/* Check for length overflow before malloc */
-	if (((size_t)_length + strLength + 1) >= (size_t)PString::npos)
+	if (((size_t)_length + strLength + 1) >= (size_t)EmaString::npos)
 	{
-		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( const char* ).";
-		throw(temp);
+		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. EmaString::append( const char* ).";
+		throwIueException(temp);
 		return *this;
 	}
 
@@ -512,8 +540,8 @@ PString& PString::append ( const char* str )
         char* pNewString = ( char* ) malloc ( _capacity );
         if ( !pNewString )
         {
-            const char* temp = "Failed to allocate memory in PString::append( const char* ).";
-            throw ( temp );
+            const char* temp = "Failed to allocate memory in EmaString::append( const char* ).";
+            throwMeeException ( temp );
             return *this;
         }
 
@@ -543,15 +571,15 @@ PString& PString::append ( const char* str )
     return *this;
 }
 
-PString& PString::append ( const PString& other )
+EmaString& EmaString::append ( const EmaString& other )
 {
     if ( !other._length ) return *this;
 
 	/* Check for length overflow before malloc */
-	if (((UInt64)_length + (UInt64)other._length + 1) >= (UInt64)PString::npos)
+	if (((UInt64)_length + (UInt64)other._length + 1) >= (UInt64)EmaString::npos)
 	{
-		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( PString ).";
-		throw(temp);
+		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. EmaString::append( EmaString ).";
+		throwIueException(temp);
 		return *this;
 	}
 
@@ -562,8 +590,8 @@ PString& PString::append ( const PString& other )
         char* pNewString = ( char* ) malloc ( _capacity );
         if ( !pNewString )
         {
-            const char* temp = "Failed to allocate memory in PString::append( const PString& ).";
-            throw ( temp );
+            const char* temp = "Failed to allocate memory in EmaString::append( const EmaString& ).";
+            throwMeeException ( temp );
             return *this;
         }
 
@@ -593,106 +621,106 @@ PString& PString::append ( const PString& other )
     return *this;
 }
 
-PString& PString::operator+= ( Int64 i )
+EmaString& EmaString::operator+= ( Int64 i )
 {
     return append ( i );
 }
 
-PString& PString::operator+= ( UInt64 i )
+EmaString& EmaString::operator+= ( UInt64 i )
 {
     return append ( i );
 }
 
-PString& PString::operator+= ( Int32 i )
+EmaString& EmaString::operator+= ( Int32 i )
 {
     return append ( i );
 }
 
-PString& PString::operator+= ( UInt32 i )
+EmaString& EmaString::operator+= ( UInt32 i )
 {
     return append ( i );
 }
 
-PString& PString::operator+= ( float f )
+EmaString& EmaString::operator+= ( float f )
 {
     return append ( f );
 }
 
-PString& PString::operator+= ( double d )
+EmaString& EmaString::operator+= ( double d )
 {
     return append ( d );
 }
 
-PString& PString::operator+= ( const char* str )
+EmaString& EmaString::operator+= ( const char* str )
 {
     return append ( str );
 }
 
-PString& PString::operator+= ( const PString& str )
+EmaString& EmaString::operator+= ( const EmaString& str )
 {
     return append ( str );
 }
 
-PString PString::operator+ ( const PString& other ) const
+EmaString EmaString::operator+ ( const EmaString& other ) const
 {
-    return PString ( *this ).append ( other );
+    return EmaString ( *this ).append ( other );
 }
 
-PString PString::operator+ ( const char* str ) const
+EmaString EmaString::operator+ ( const char* str ) const
 {
-    return PString ( *this ).append ( str );
+    return EmaString ( *this ).append ( str );
 }
 
-PString::operator const char *() const
+EmaString::operator const char *() const
 {
     return c_str();
 }
 
-PString PString::substr ( UInt32 index, UInt32 length ) const
+EmaString EmaString::substr ( UInt32 index, UInt32 length ) const
 {
-    if ( length != PString::npos &&
+    if ( length != EmaString::npos &&
             ( index > _length ||
               index + length > _length )
        )
     {
-        PString text ( "Attempt to access out of range position in PString::substr( UInt32 , UInt32 ) const. Passed in index is " );
+        EmaString text ( "Attempt to access out of range position in EmaString::substr( UInt32 , UInt32 ) const. Passed in index is " );
         text.append ( index ).append ( " and passed in length is " ).append ( length ).append ( " while length is " ).append ( _length ).append ( "." );
-        throw  ( text );
-        return PString();
+        throwOorException ( text );
+        return EmaString();
     }
 
-    PString retVal;
+    EmaString retVal;
 
     retVal.set ( _pString + index, length );
 
     return retVal;
 }
 
-char PString::operator[] ( UInt32 pos ) const
+char EmaString::operator[] ( UInt32 pos ) const
 {
     if ( pos > _length )
     {
-        PString text ( "Attempt to access out of range position in PString::operator[]() const. Passed in index is " );
+        EmaString text ( "Attempt to access out of range position in EmaString::operator[]() const. Passed in index is " );
         text.append ( pos ).append ( " while length is " ).append ( _length ).append ( "." );
-        throw ( text );
+        throwOorException ( text );
     }
 
     return _pString[pos];
 }
 
-char& PString::operator[] ( UInt32 pos )
+char& EmaString::operator[] ( UInt32 pos )
 {
     if ( pos > _length )
     {
-        PString text ( "Attempt to access out of range position in PString::operator[](). Passed in index is " );
+        EmaString text ( "Attempt to access out of range position in EmaString::operator[](). Passed in index is " );
         text.append ( pos ).append ( " while length is " ).append ( _length ).append ( "." );
-        throw ( text );
+        throwOorException ( text );
     }
 
     return _pString[pos];
 }
 
-bool PString::operator== ( const PString& other ) const
+bool EmaString::operator== ( const EmaString& other ) const
 {
     if ( this == &other ) return true;
 
@@ -707,7 +735,7 @@ bool PString::operator== ( const PString& other ) const
     return ( 0 == memcmp ( _pString, other._pString, _length ) ? true : false );
 }
 
-bool PString::operator!= ( const PString& other ) const
+bool EmaString::operator!= ( const EmaString& other ) const
 {
     if ( this == &other ) return false;
 
@@ -722,7 +750,7 @@ bool PString::operator!= ( const PString& other ) const
     return ( 0 == memcmp ( _pString, other._pString, _length ) ? false : true );
 }
 
-bool PString::operator== ( const char* other ) const
+bool EmaString::operator== ( const char* other ) const
 {
     if ( !other )
         return false;
@@ -733,7 +761,7 @@ bool PString::operator== ( const char* other ) const
     return !memcmp ( _pString, other, _length );
 }
 
-bool PString::operator!= ( const char* other ) const
+bool EmaString::operator!= ( const char* other ) const
 {
     if ( !other )
         return true;
@@ -744,47 +772,47 @@ bool PString::operator!= ( const char* other ) const
     return memcmp ( _pString, other, _length ) != 0;
 }
 
-bool PString::operator> ( const PString& rhs ) const
+bool EmaString::operator> ( const EmaString& rhs ) const
 {
     return compare ( rhs.c_str() ) > 0;
 }
 
-bool PString::operator< ( const PString& rhs ) const
+bool EmaString::operator< ( const EmaString& rhs ) const
 {
     return compare ( rhs.c_str() ) < 0;
 }
 
-bool PString::operator>= ( const PString& rhs ) const
+bool EmaString::operator>= ( const EmaString& rhs ) const
 {
     return compare ( rhs.c_str() ) >= 0;
 }
 
-bool PString::operator<= ( const PString& rhs ) const
+bool EmaString::operator<= ( const EmaString& rhs ) const
 {
     return compare ( rhs.c_str() ) <= 0;
 }
 
-bool PString::operator> ( const char* rhs ) const
+bool EmaString::operator> ( const char* rhs ) const
 {
     return compare ( rhs ) > 0;
 }
 
-bool PString::operator< ( const char* rhs ) const
+bool EmaString::operator< ( const char* rhs ) const
 {
     return compare ( rhs ) < 0;
 }
 
-bool PString::operator>= ( const char* rhs ) const
+bool EmaString::operator>= ( const char* rhs ) const
 {
     return compare ( rhs ) >= 0;
 }
 
-bool PString::operator<= ( const char* rhs ) const
+bool EmaString::operator<= ( const char* rhs ) const
 {
     return compare ( rhs ) <= 0;
 }
 
-PString& PString::trimWhitespace()
+EmaString& EmaString::trimWhitespace()
 {
     if ( !_length ) return *this;
 
@@ -819,17 +847,17 @@ PString& PString::trimWhitespace()
     return *this;
 }
 
-Int32 PString::find ( const PString & source, Int32 index ) const
+Int32 EmaString::find ( const EmaString & source, Int32 index ) const
 {
     if ( index < 0 || static_cast<UInt32> ( index ) >= _length ||! source._length )
-        return PString::npos;
+        return EmaString::npos;
 
     char* p = _pString + index;
     Int32 retVal ( 0 );
     while ( *p )
     {
         if ( _length - ( p - _pString ) < source._length )
-            return PString::npos;
+            return EmaString::npos;
 
         char* q = source._pString;
         retVal = static_cast<UInt32> ( p - _pString );
@@ -839,31 +867,31 @@ Int32 PString::find ( const PString & source, Int32 index ) const
                 return retVal;
 
             if ( ! *++p )
-                return PString::npos;
+                return EmaString::npos;
         }
 
         if ( q == source._pString )
             ++p;
     }
 
-    return PString::npos;
+    return EmaString::npos;
 }
 
-Int32 PString::find ( const char* source, Int32 index ) const
+Int32 EmaString::find ( const char* source, Int32 index ) const
 {
     if ( index < 0 || static_cast<UInt32> ( index ) >= _length )
-        return PString::npos;
+        return EmaString::npos;
 
     UInt32 sourceLength ( static_cast<UInt32> ( strlen ( source ) ) );
     if ( ! sourceLength )
-        return PString::npos;
+        return EmaString::npos;
 
     char *p = _pString + index;
     Int32 retVal ( 0 );
     while ( *p )
     {
         if ( _length - static_cast<UInt32> ( p - _pString ) < sourceLength )
-            return PString::npos;
+            return EmaString::npos;
 
         const char *q = source;
         retVal = static_cast<Int32> ( p - _pString );
@@ -873,23 +901,23 @@ Int32 PString::find ( const char* source, Int32 index ) const
                 return retVal;
 
             if ( ! *++p )
-                return PString::npos;
+                return EmaString::npos;
         }
 
         if ( q == source )
             ++p;
     }
 
-    return PString::npos;
+    return EmaString::npos;
 }
 
-Int32 PString::findLast ( const PString& str ) const
+Int32 EmaString::findLast ( const EmaString& str ) const
 {
     if ( ! str._length || ! _length )
-        return PString::npos;
+        return EmaString::npos;
 
     if ( str._length > _length )
-        return PString::npos;
+        return EmaString::npos;
 
     const char *p, *q;
     Int32 retVal ( _length - str._length );
@@ -907,14 +935,14 @@ Int32 PString::findLast ( const PString& str ) const
             return retVal;
 
         if ( --retVal < 0 )
-            return PString::npos;
+            return EmaString::npos;
     }
 }
 
-Int32 PString::findLast ( const char* str ) const
+Int32 EmaString::findLast ( const char* str ) const
 {
     if ( !str || str[0] == 0 || !_length )
-        return PString::npos;
+        return EmaString::npos;
 
     Int32 strLen ( static_cast<Int32> ( strlen ( str ) ) );
 
@@ -934,11 +962,11 @@ Int32 PString::findLast ( const char* str ) const
             return retVal;
 
         if ( --retVal < 0 )
-            return PString::npos;
+            return EmaString::npos;
     }
 }
 
-bool PString::caseInsensitiveCompare ( const PString& rhs ) const
+bool EmaString::caseInsensitiveCompare ( const EmaString& rhs ) const
 {
     if ( ( this == &rhs ) ||
             ( !_pString && !rhs._pString ) )
@@ -954,7 +982,7 @@ bool PString::caseInsensitiveCompare ( const PString& rhs ) const
     return true;
 }
 
-bool PString::caseInsensitiveCompare ( const char * rhs ) const
+bool EmaString::caseInsensitiveCompare ( const char * rhs ) const
 {
     if ( ! rhs )
         return ! _pString;
@@ -969,7 +997,7 @@ bool PString::caseInsensitiveCompare ( const char * rhs ) const
     return true;
 }
 
-int PString::compare ( const char * rhs ) const
+int EmaString::compare ( const char * rhs ) const
 {
     for ( unsigned int i = 0; i < _length  && i < strlen ( rhs ); ++i )
         if ( _pString[ i ] != rhs[ i ] )
