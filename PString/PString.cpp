@@ -1,5 +1,6 @@
 #include "PString.h"
-
+#include "PException.h"
+using namespace  PLibary;
  
 
 PString::PString() :
@@ -23,7 +24,7 @@ PString::PString( const char* str, UInt32 length ) :
 			if ( tempLength >= PString::npos )
 			{
 				const char* temp = "The length of the passed in string is larger than MAX_UINT32. PString( const char* , UInt32 ).";
-				throw ( temp );
+				throw PException ( temp );
 				return;
 			}
 
@@ -44,7 +45,7 @@ PString::PString( const char* str, UInt32 length ) :
         if ( !_pString )
         {
             const char* temp = "Failed to allocate memory in PString( const char* , UInt32 ).";
-			throw( temp );
+			throw PException( temp );
             return;
         }
 
@@ -65,7 +66,7 @@ PString::PString( const PString& other ) :
         if ( !_pString )
         {
             const char* temp = "Failed to allocate memory in PString( const char* , UInt32 ).";
-            throw( temp );
+            throw PException( temp );
             return;
         }
 
@@ -133,7 +134,7 @@ PString& PString::operator= ( const PString& other )
             if ( !_pString )
             {
                 const char* temp = "Failed to allocate memory in PString::operator=( const PString& ).";
-                throw ( temp );
+                throw PException ( temp );
                 return *this;
             }
         }
@@ -176,7 +177,7 @@ PString& PString::set ( const char* str, UInt32 length )
 			if ( tempLength >= PString::npos )
 			{
 				const char* temp = "The length of the passed in string is larger than MAX_UINT32. PString::set( const char* , UInt32 ).";
-				throw( temp );
+				throw PException( temp );
 				return *this;
 			}
 
@@ -210,7 +211,7 @@ PString& PString::set ( const char* str, UInt32 length )
 				if ( !_pString )
 				{
 					const char* temp = "Failed to allocate memory in PString::set( const char* , UInt32 ).";
-					throw ( temp );
+					throw PException ( temp );
 					return *this;
 				}
 				
@@ -239,7 +240,7 @@ PString& PString::set ( const char* str, UInt32 length )
             if ( !_pString )
             {
                 const char* temp = "Failed to allocate memory in PString::set( const char* , UInt32 ).";
-                throw ( temp );
+                throw PException ( temp );
                 return *this;
             }
         }
@@ -261,7 +262,7 @@ PString& PString::append ( Int64 i )
 	if (((UInt64)_length + 22) >= (UInt64)PString::npos)
 	{
 		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( Int64 ).";
-		throw (temp);
+		throw PException (temp);
 		return *this;
 	}
 
@@ -273,7 +274,7 @@ PString& PString::append ( Int64 i )
         if ( !pNewString )
         {
             const char* temp = "Failed to allocate memory in PString::append( Int64 ).";
-            throw ( temp );
+            throw PException ( temp );
             return *this;
         }
 
@@ -301,7 +302,7 @@ PString& PString::append ( UInt64 i )
 	if (((UInt64)_length + 22) >= (UInt64)PString::npos)
 	{
 		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( UInt64 ).";
-		throw (temp);
+		throw PException (temp);
 		return *this;
 	}
 
@@ -313,7 +314,7 @@ PString& PString::append ( UInt64 i )
         if ( !pNewString )
         {
             const char* temp = "Failed to allocate memory in PString::append( UInt64 ).";
-            throw  ( temp );
+            throw PException  ( temp );
             return *this;
         }
 
@@ -337,7 +338,7 @@ PString& PString::append ( Int32 i )
 	if (((UInt64)_length + 13) >= (UInt64)PString::npos)
 	{
 		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( Int32 ).";
-		throw (temp);
+		throw PException (temp);
 		return *this;
 	}
 
@@ -349,7 +350,7 @@ PString& PString::append ( Int32 i )
         if ( !pNewString )
         {
             const char* temp = "Failed to allocate memory in PString::append( Int32 ).";
-            throw ( temp );
+            throw PException ( temp );
             return *this;
         }
 
@@ -377,7 +378,7 @@ PString& PString::append ( UInt32 i )
 	if (((UInt64)_length + 13) >= (UInt64)PString::npos)
 	{
 		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( UInt32 ).";
-		throw (temp);
+		throw PException (temp);
 		return *this;
 	}
 	
@@ -389,7 +390,7 @@ PString& PString::append ( UInt32 i )
         if ( !pNewString )
         {
             const char* temp = "Failed to allocate memory in PString::append( UInt32 ).";
-            throw ( temp );
+            throw PException ( temp );
             return *this;
         }
 
@@ -417,7 +418,7 @@ PString& PString::append ( float f )
 	if (((UInt64)_length + 33) >= (UInt64)PString::npos)
 	{
 		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( float ).";
-		throw(temp);
+		throw PException(temp);
 		return *this;
 	}
 	
@@ -429,7 +430,7 @@ PString& PString::append ( float f )
         if ( !pNewString )
         {
             const char* temp = "Failed to allocate memory in PString::append( float ).";
-            throw ( temp );
+            throw PException ( temp );
             return *this;
         }
 
@@ -439,13 +440,13 @@ PString& PString::append ( float f )
             free ( _pString );
         }
 
-        _length += snprintf ( pNewString + _length, 33, "%g", f );
+        _length += snprintf ( pNewString + _length, 33, "%.15g", f );
 
         _pString = pNewString;
     }
     else
     {
-        _length += snprintf ( _pString + _length, 33, "%g", f );
+        _length += snprintf ( _pString + _length, 33, "%.15g", f );
     }
 
     return *this;
@@ -457,7 +458,7 @@ PString& PString::append ( double d )
 	if (((UInt64)_length + 33) >= (UInt64)PString::npos)
 	{
 		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( double ).";
-		throw(temp);
+		throw PException(temp);
 		return *this;
 	}
 	
@@ -469,7 +470,7 @@ PString& PString::append ( double d )
         if ( !pNewString )
         {
             const char* temp = "Failed to allocate memory in PString::append( double ).";
-            throw ( temp );
+            throw PException ( temp );
             return *this;
         }
 
@@ -479,13 +480,13 @@ PString& PString::append ( double d )
             free ( _pString );
         }
 
-        _length += snprintf ( pNewString + _length, 33, "%lg", d );
+        _length += snprintf ( pNewString + _length, 33, "%.15g", d );
 
         _pString = pNewString;
     }
     else
     {
-        _length += snprintf ( _pString + _length, 33, "%lg", d );
+        _length += snprintf ( _pString + _length, 33, "%.15g", d );
     }
 
     return *this;
@@ -501,7 +502,7 @@ PString& PString::append ( const char* str )
 	if (((size_t)_length + strLength + 1) >= (size_t)PString::npos)
 	{
 		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( const char* ).";
-		throw(temp);
+		throw PException(temp);
 		return *this;
 	}
 
@@ -513,7 +514,7 @@ PString& PString::append ( const char* str )
         if ( !pNewString )
         {
             const char* temp = "Failed to allocate memory in PString::append( const char* ).";
-            throw ( temp );
+            throw PException ( temp );
             return *this;
         }
 
@@ -551,7 +552,7 @@ PString& PString::append ( const PString& other )
 	if (((UInt64)_length + (UInt64)other._length + 1) >= (UInt64)PString::npos)
 	{
 		const char* temp = "The total length of the passed in string is larger than MAX_UINT32. PString::append( PString ).";
-		throw(temp);
+		throw PException(temp);
 		return *this;
 	}
 
@@ -563,7 +564,7 @@ PString& PString::append ( const PString& other )
         if ( !pNewString )
         {
             const char* temp = "Failed to allocate memory in PString::append( const PString& ).";
-            throw ( temp );
+            throw PException ( temp );
             return *this;
         }
 
@@ -657,7 +658,7 @@ PString PString::substr ( UInt32 index, UInt32 length ) const
     {
         PString text ( "Attempt to access out of range position in PString::substr( UInt32 , UInt32 ) const. Passed in index is " );
         text.append ( index ).append ( " and passed in length is " ).append ( length ).append ( " while length is " ).append ( _length ).append ( "." );
-        throw  ( text );
+        throw PException  ( text );
         return PString();
     }
 
@@ -674,7 +675,7 @@ char PString::operator[] ( UInt32 pos ) const
     {
         PString text ( "Attempt to access out of range position in PString::operator[]() const. Passed in index is " );
         text.append ( pos ).append ( " while length is " ).append ( _length ).append ( "." );
-        throw ( text );
+        throw PException ( text );
     }
 
     return _pString[pos];
@@ -686,7 +687,7 @@ char& PString::operator[] ( UInt32 pos )
     {
         PString text ( "Attempt to access out of range position in PString::operator[](). Passed in index is " );
         text.append ( pos ).append ( " while length is " ).append ( _length ).append ( "." );
-        throw ( text );
+		 throw PException  (text);
     }
 
     return _pString[pos];
